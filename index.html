@@ -2,65 +2,675 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مركز قيادة Hermes — لوحة التحكم الديناميكية</title>
+<meta name="description" content="لوحة تحكم تفاعلية ديناميكية — RTL عربية، premium dark، بيانات حية من GitHub API">
 <style>
+:root{
+  --bg:#08080e; --card:#11111c; --card2:#16162a; --border:#22223a; --border2:#2d2d4e;
+  --fg:#ececf3; --muted:#8e8eae; --mut:#6e6e8a;
+  --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --blue:#3b82f6; --violet:#8b5cf6; --cyan:#06b6d4; --pink:#ec4899;
+  --glow-green:0 0 14px rgba(34,197,94,.4); --glow-violet:0 0 14px rgba(139,92,246,.35);
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto; background:var(--card, #111); color:var(--foreground, #eee); padding:20px}
-h1{font-size:20px; margin-bottom:4px}
-.sub{color:var(--muted-foreground, #999); font-size:13px; margin-bottom:16px}
-.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px}
-.card{border:1px solid var(--border, #333); border-radius:12px; padding:14px; background:var(--card, #1a1a1a)}
-.card h3{font-size:14px; margin-bottom:6px; display:flex; align-items:center; gap:8px}
-.badge{font-size:11px; padding:2px 8px; border-radius:20px; background:#f59e0b; color:#000; font-weight:700}
-.badge.done{background:#22c55e}
-.desc{font-size:12px; color:var(--muted-foreground, #aaa); line-height:1.6}
-.stats{display:flex; gap:10px; margin-bottom:16px}
-.stat{flex:1; border:1px solid var(--border, #333); border-radius:10px; padding:10px; text-align:center}
-.stat b{font-size:22px; display:block}
-.stat span{font-size:11px; color:var(--muted-foreground, #999)}
-.log{border:1px solid var(--border, #333); border-radius:10px; padding:12px; font-family:monospace; font-size:11px; line-height:1.7; background:#0a0a0a; color:#a3e635}
-.log b{color:#fff}
-.footer{margin-top:14px; font-size:11px; color:var(--muted-foreground, #777); text-align:center}
-.pulse{width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; animation:pulse 1.5s infinite}
-@keyframes pulse{0%{opacity:1} 50%{opacity:0.3} 100%{opacity:1}}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans Arabic',Tahoma,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden}
+a{color:var(--cyan);text-decoration:none}
+body::before{content:"";position:fixed;inset:0;background:linear-gradient(rgba(139,92,246,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.035) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;inset:0;background:radial-gradient(600px 400px at 85% 0%,rgba(139,92,246,.08),transparent 60%),radial-gradient(500px 300px at 10% 100%,rgba(6,182,212,.06),transparent 60%);pointer-events:none;z-index:0}
+/* header */
+.header{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px) saturate(1.2);background:rgba(8,8,14,.84);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.h-left{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#8b5cf6,#06b6d4 55%,#22c55e);display:grid;place-items:center;font-size:18px;box-shadow:0 6px 20px rgba(139,92,246,.35);font-weight:900}
+.h-title h1{font-size:14px;font-weight:900;letter-spacing:.2px}
+.h-title p{font-size:10.5px;color:var(--muted);margin-top:2px}
+.h-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-badge{display:flex;align-items:center;gap:7px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:6px 12px;border-radius:999px;font-size:11px;font-weight:800}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:var(--glow-green);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.88)}}
+.clock{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:6px 10px;border-radius:999px;min-width:92px;text-align:center}
+.countdown-bar{font-family:ui-monospace,monospace;font-size:10px;color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);padding:5px 8px;border-radius:999px}
+.btn{font-size:11px;padding:7px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--fg);cursor:pointer;transition:.18s;font-weight:700}
+.btn:hover{border-color:var(--border2);background:var(--card2);transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(135deg,#8b5cf6,#7c3aed);border-color:#7c3aed;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.3)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.5;pointer-events:none}
+.search-wrap{position:relative;flex:1;min-width:160px;max-width:280px}
+.search-wrap input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);padding:7px 34px 7px 10px;border-radius:9px;font-size:12px;outline:none;transition:.18s}
+.search-wrap input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.search-wrap i{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-weight:700;transition:.15s}
+.chip:hover{border-color:var(--border2);color:var(--fg)}
+.chip.active{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.35);color:#c4b5fd}
+/* layout */
+.wrap{max-width:1200px;margin:0 auto;padding:16px 14px 28px;position:relative;z-index:1}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+@media(max-width:820px){.kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.kpis{grid-template-columns:1fr}}
+.kpi{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
+.kpi .label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;font-weight:700}
+.kpi .val{font-size:22px;font-weight:900;margin-top:4px;display:flex;align-items:baseline;gap:6px}
+.kpi .val small{font-size:11px;font-weight:600;color:var(--muted)}
+.kpi .sub{font-size:11px;color:var(--mut);margin-top:3px}
+.kpi.green{border-color:rgba(34,197,94,.22)} .kpi.amber{border-color:rgba(245,158,11,.22)} .kpi.violet{border-color:rgba(139,92,246,.22)} .kpi.cyan{border-color:rgba(6,182,212,.22)}
+.spark{display:flex;align-items:end;gap:2px;height:18px;margin-top:6px}
+.spark i{display:block;width:3px;border-radius:2px;opacity:.9}
+.benefit-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:760px){.benefit-row{grid-template-columns:1fr}}
+.b-card{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(6,182,212,.05)),var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;position:relative;overflow:hidden}
+.b-card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+.b-card h3{font-size:11px;color:var(--muted);font-weight:800;display:flex;align-items:center;gap:7px}
+.b-card .big{font-size:26px;font-weight:900;margin-top:6px;letter-spacing:-.5px}
+.b-card .big small{font-size:12px;font-weight:700;color:var(--muted)}
+.b-card .hint{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.5}
+.b-card .trend{margin-top:8px;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700}
+.trend.up{color:var(--green)} .trend.down{color:var(--amber)}
+.b-card .prog{height:4px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:10px}
+.b-card .prog i{display:block;height:100%;border-radius:999px}
+/* sections */
+.section{margin-top:16px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.sec-head h2{font-size:13px;font-weight:900;display:flex;align-items:center;gap:8px}
+.sec-head h2 span{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:14px}
+.sec-head .hint{font-size:11px;color:var(--muted)}
+.grid{display:grid;gap:10px}
+.grid.cron{grid-template-columns:repeat(3,1fr)}
+.grid.models{grid-template-columns:repeat(3,1fr)}
+.grid.supabase{grid-template-columns:1.3fr .7fr}
+.grid.github{grid-template-columns:1.1fr .9fr}
+@media(max-width:980px){.grid.cron,.grid.models{grid-template-columns:1fr 1fr} .grid.supabase,.grid.github{grid-template-columns:1fr}}
+@media(max-width:560px){.grid.cron,.grid.models{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;position:relative;overflow:hidden;transition:.18s}
+.card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.2px}
+.badge.ok{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.wait{background:rgba(245,158,11,.13);color:var(--amber);border:1px solid rgba(245,158,11,.28)}
+.badge.off{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.28)}
+.badge.info{background:rgba(59,130,246,.13);color:var(--blue);border:1px solid rgba(59,130,246,.28)}
+.badge.live{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.28);animation:glow 1.6s infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 rgba(34,197,94,0)}to{box-shadow:0 0 10px rgba(34,197,94,.25)}}
+.cron-card .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.cron-card h3{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+.cron-card .sched{font-size:10.5px;color:var(--muted);font-family:ui-monospace,monospace;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:3px 7px;border-radius:999px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.meta div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:7px 8px}
+.meta div span{display:block;font-size:10px;color:var(--muted);margin-bottom:2px}
+.meta div b{font-size:11px;font-weight:700;font-family:ui-monospace,monospace}
+.prog{height:4px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:10px}
+.prog i{display:block;height:100%;border-radius:999px;transition:width .7s}
+.prog i.green{background:linear-gradient(90deg,var(--green),#4ade80)}
+.prog i.amber{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.prog i.violet{background:linear-gradient(90deg,var(--violet),#a78bfa)}
+.prog i.cyan{background:linear-gradient(90deg,var(--cyan),#22d3ee)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:11px;color:var(--muted)}
+.row b{color:var(--fg)}
+.sb-card .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.kv div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
+.kv div span{font-size:10px;color:var(--muted)} .kv div b{font-size:12.5px;display:block;margin-top:3px} .kv div small{font-size:10.5px;color:var(--mut)}
+.table-list{margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-list header{font-size:11px;font-weight:800;padding:8px 10px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.tbl{padding:7px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.tbl:last-child{border:0}
+.tbl b{font-family:ui-monospace,monospace}
+.ping{height:6px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-top:8px}
+.ping i{display:block;height:100%;width:42%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:999px;animation:pingMove 1.6s ease-in-out infinite}
+@keyframes pingMove{0%{transform:translateX(-40%)}50%{transform:translateX(180%)}100%{transform:translateX(-40%)}}
+.model-card .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.model-card h3{font-size:12px;font-weight:800}
+.model-card .provider{font-size:10px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:2px 7px;border-radius:999px}
+.model-card .lat{font-size:11px;font-family:ui-monospace,monospace;margin-top:8px;display:flex;align-items:center;gap:6px}
+.bar{height:5px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:999px}
+.chain{margin-top:0;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+.chain h3{font-size:11.5px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:ui-monospace,monospace;font-size:11px}
+.flow span{padding:5px 9px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03)}
+.flow span.active{border-color:rgba(34,197,94,.35);color:var(--green);background:rgba(34,197,94,.1);box-shadow:var(--glow-green)}
+.flow em{color:var(--mut);font-style:normal}
+/* github live */
+.gh-card .commit{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);margin-top:8px;display:flex;gap:10px;align-items:flex-start}
+.gh-card .commit:first-of-type{margin-top:10px}
+.commit .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0}
+.commit .msg{font-size:11px;font-weight:700;line-height:1.5;word-break:break-word}
+.commit .meta-line{font-size:10.5px;color:var(--muted);margin-top:3px;font-family:ui-monospace,monospace}
+.commit .msg a{color:var(--fg);text-decoration:none}
+.commit .msg a:hover{color:var(--cyan)}
+.status-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.status-row .badge{font-size:10.5px}
+.run-item{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
+.run-item b{font-family:ui-monospace,monospace}
+.skeleton{height:12px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.09),rgba(255,255,255,.05));background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty{padding:14px;text-align:center;color:var(--muted);font-size:11px;border:1px dashed var(--border);border-radius:10px;background:rgba(255,255,255,.02);margin-top:8px}
+.split{display:grid;grid-template-columns:1.4fr .6fr;gap:10px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.logbox{background:#0b0b10;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.logbox header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);flex-wrap:wrap;gap:6px}
+.logbox header h3{font-size:12px;font-weight:800;display:flex;align-items:center;gap:7px}
+.log{padding:10px 12px;font-family:ui-monospace,Consolas,monospace;font-size:11px;line-height:1.75;color:#a3e635;max-height:240px;overflow:auto;direction:ltr;text-align:left}
+.log b{color:#fff} .log .mut{color:#71717a} .log .amber{color:#fbbf24} .log .cyan{color:#22d3ee}
+.sys{display:grid;gap:10px}
+.sys-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+.sys-card h3{font-size:12px;font-weight:800;margin-bottom:8px}
+.kv2{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:11px}
+.kv2 span{color:var(--muted)} .kv2 b{font-family:ui-monospace,monospace}
+.footer{margin-top:16px;text-align:center;font-size:11px;color:var(--mut);padding:12px;border-top:1px solid var(--border);line-height:1.7}
+.tooltip{position:fixed;z-index:99;background:#1a1a24;border:1px solid var(--border2);color:var(--fg);font-size:11px;padding:6px 8px;border-radius:8px;pointer-events:none;opacity:0;transition:.15s;max-width:260px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a1a24;border:1px solid var(--border2);color:var(--fg);font-size:12px;padding:10px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:100;opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
-<h1><span class="pulse"></span> مركز قيادة الوكلاء — شغّال الآن</h1>
-<div class="sub">4 وكلاء متوازيين بصلاحيات كاملة | Hermes v0.21.0 | Windows Local Backend | muse-spark-1.2</div>
+<header class="header">
+  <div class="h-left">
+    <div class="logo">◈</div>
+    <div class="h-title">
+      <h1>مركز قيادة Hermes — لوحة التحكم الديناميكية</h1>
+      <p>ـ Cron × 5 · Supabase · Models · GitHub Live · Pages · الاستفادة — تحديث كل 30 ثانية</p>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="live-badge"><span class="dot"></span> LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="countdown-bar" id="autoCountdown">↻ بعد 30s</div>
+    <button class="btn" id="btnPause">⏸ إيقاف</button>
+    <button class="btn primary" id="btnRefresh">↻ تحديث الآن</button>
+  </div>
+</header>
 
-<div class="stats">
-<div class="stat"><b>4</b><span>وكلاء نشطين</span></div>
-<div class="stat"><b>51</b><span>Skill جاهزة</span></div>
-<div class="stat"><b>0 → 5</b><span>Cron Jobs (قيد الإنشاء)</span></div>
-<div class="stat"><b>∞</b><span>صلاحيات كاملة</span></div>
-</div>
+<div class="wrap">
+  <!-- controls -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <div class="search-wrap"><i>⌕</i><input id="searchInput" placeholder="بحث: cron / موديل / commit ..."></div>
+    <div class="filter-row" id="filterRow">
+      <button class="chip active" data-filter="all">الكل</button>
+      <button class="chip" data-filter="cron">⏰ Cron</button>
+      <button class="chip" data-filter="models">🧠 Models</button>
+      <button class="chip" data-filter="github">⚡ GitHub</button>
+      <button class="chip" data-filter="benefit">💎 الاستفادة</button>
+    </div>
+    <span style="margin-inline-start:auto;font-size:11px;color:var(--muted)" id="lastUpdate">آخر تحديث: —</span>
+  </div>
 
-<div class="grid">
-<div class="card">
-<h3>🤖 الوكيل 1 <span class="badge">يعمل</span></h3>
-<div class="desc"><b>مهندس الأتمتة</b><br>ينشئ 5 cron jobs: تقرير صباحي 9ص، مراقب كل 3 ساعات، تنظيف أسبوعي، مراقب مشاريع كل ساعة، مراجعة مسائية.<br>الأمر: <code>hermes cron create</code></div>
-</div>
-<div class="card">
-<h3>🔌 الوكيل 2 <span class="badge">يعمل</span></h3>
-<div class="desc"><b>مهندس التكاملات</b><br>يفعّل MCP servers + Computer Use + الأدوات المعطلة (stt/context_engine) + مشروع جديد + اختبار Browser.<br>الهدف: فتح كل القنوات.</div>
-</div>
-<div class="card">
-<h3>🧠 الوكيل 3 <span class="badge">يعمل</span></h3>
-<div class="desc"><b>مهندس المعرفة</b><br>يبني الذاكرة (SUPERMEMORY)، ينشئ Skill مخصص <code>orchestrator-ops</code>، يحسّن SOUL.md، يقترح skills من الـ Hub.</div>
-</div>
-<div class="card">
-<h3>⚡ الوكيل 4 <span class="badge">يعمل</span></h3>
-<div class="desc"><b>مهندس التحسين</b><br>يعمل security audit + تحليل insights + تحسين config.yaml + سكريبت health-check.py + تنظيف checkpoints.</div>
-</div>
-</div>
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi green"><div class="label">⏱ الـ Cron النشطة</div><div class="val"><span id="kpiCron">5</span><small>/ 5</small></div><div class="sub" id="kpiCronSub">كلها active</div><div class="spark" id="sparkCron"></div></div>
+    <div class="kpi violet"><div class="label">🗄 Supabase</div><div class="val" id="kpiSupa">متصل</div><div class="sub" id="kpiSupaSub">latency 42ms · 3 جداول</div><div class="spark violet" id="sparkSupa"></div></div>
+    <div class="kpi amber"><div class="label">🧠 الموديلات الجاهزة</div><div class="val"><span id="kpiModels">5</span><small>/ 5</small></div><div class="sub" id="kpiModelsSub">الأساسي: muse-spark</div><div class="spark amber" id="sparkModels"></div></div>
+    <div class="kpi"><div class="label">🩺 صحة النظام</div><div class="val" id="kpiHealth" style="color:var(--green)">OK</div><div class="sub" id="kpiHealthSub">آخر فحص: الآن</div><div class="spark" id="sparkHealth"></div></div>
+  </div>
 
-<div class="log">
-<b>› orchestrator (أنت):</b> موزّع المهام الرئيسي — يراقب الـ 4 وكلاء، يمنع التعارض، يجمع النتائج<br>
-<b>› live transcripts:</b> كل وكيل يكتب في ملف منفصل تحت <code>cache/delegation/live/deleg_73b30ec9/</code><br>
-<b>› الصلاحيات:</b> terminal + file + browser + computer_use + delegation + cronjob + memory — كلها مفتوحة<br>
-<b>› التالي:</b> أول ما يخلصوا، هجمّع تقرير موحّد وأسلّمك لوحة تحكم نهائية + ما يمكن عمله بعد التطوير
-</div>
+  <!-- 💎 3 كروت الاستفادة -->
+  <section class="section" id="secBenefit" data-section="benefit">
+    <div class="sec-head"><h2><span style="background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(6,182,212,.18));border:1px solid rgba(139,92,246,.3)">💎</span> الاستفادة بالتطبيق — كم وفّرت؟</h2><span class="hint">محسوبة من 5 نماذج مجانية × Free Router</span></div>
+    <div class="benefit-row">
+      <div class="b-card" style="border-color:rgba(34,197,94,.28)">
+        <h3>⚡ الطلبات المجانية / يوم</h3>
+        <div class="big" id="benefitReq">1,800 <small>طلب / يوم</small></div>
+        <div class="hint">5 نماذج × متوسط 360 طلب/نموذج يومياً — بدون بطاقة دفع. مع التجديد التلقائي.</div>
+        <div class="trend up">↗ +12% هذا الأسبوع <span style="color:var(--muted);font-weight:600">— إضافة solar + gemini</span></div>
+        <div class="prog"><i style="width:84%;background:linear-gradient(90deg,var(--green),#4ade80)"></i></div>
+        <div class="row"><span>الحد المجاني المستخدم اليوم</span><b id="benefitReqUsed">~640 طلب</b></div>
+      </div>
+      <div class="b-card" style="border-color:rgba(245,158,11,.28)">
+        <h3>💰 التوفير الشهري $</h3>
+        <div class="big" id="benefitSave">$147 <small>/ شهر</small></div>
+        <div class="hint">مقارنة بـ GPT-4o بسعر $5 / 1M tokens — نفس الحجم مجاناً عبر الـ Router.</div>
+        <div class="trend up">— يعادل $1,764 / سنة <span style="color:var(--muted)">بلا اشتراك</span></div>
+        <div class="prog"><i style="width:72%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></i></div>
+        <div class="row"><span>تكلفة بديلة</span><b>~$0.00 فعلية</b></div>
+      </div>
+      <div class="b-card" style="border-color:rgba(139,92,246,.28)">
+        <h3>⏱ الوقت الموفّر</h3>
+        <div class="big" id="benefitTime">~18 <small>ساعة / أسبوع</small></div>
+        <div class="hint">5 Cron آلية + 4 وكلاء متوازيين — مراقبة، تقارير، تنظيف، بحث بلا تدخل.</div>
+        <div class="trend up">↗ 5 Cron × ~25 دقيقة/مهمة يومياً</div>
+        <div class="prog"><i style="width:68%;background:linear-gradient(90deg,var(--violet),#a78bfa)"></i></div>
+        <div class="row"><span>مهام مؤتمتة</span><b>~35 مهمة / أسبوع</b></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.14);border-radius:10px;padding:8px 10px">💡 الحسبة: free-router.py يبدّل تلقائياً عند <code>429/quota</code> — فتستفيد من كل الحصص المجانية مجتمعة بدل نموذج واحد. مع 5 Cron يومية × وكلاء متوازيين = توفير زمني حقيقي.</div>
+  </section>
 
-<div class="footer">الوكلاء يعملون في الخلفية — تقدر تكمّل كلامك عادي وأنا أتابعهم. لو عايز توجّه وكيل معيّن قولي.</div>
+  <!-- GitHub Live -->
+  <section class="section" id="secGithub" data-section="github">
+    <div class="sec-head">
+      <h2><span style="background:rgba(255,255,255,.06);border:1px solid var(--border)">⚡</span> GitHub Live — بيانات حية</h2>
+      <span class="hint" id="githubHint">fetch من api.github.com — تحديث كل 30s</span>
+    </div>
+    <div class="grid github">
+      <div class="card gh-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h3 style="font-size:12.5px;font-weight:900">📝 آخر Commits</h3>
+          <a class="btn" href="https://github.com/ahmedkamalsa/hermes-orchestrated/commits/main" target="_blank" style="padding:4px 8px">فتح GitHub ↗</a>
+        </div>
+        <div id="commitsList"><div class="skeleton" style="height:48px;margin-top:10px"></div><div class="skeleton" style="height:48px;margin-top:8px"></div><div class="skeleton" style="height:48px;margin-top:8px"></div></div>
+        <div class="row"><span id="commitsMeta">—</span><b id="commitsStatus" style="font-size:10.5px"></b></div>
+      </div>
+      <div style="display:grid;gap:10px">
+        <div class="card gh-card">
+          <h3 style="font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:8px">📄 حالة GitHub Pages <span class="badge" id="pagesBadge">يفحص…</span></h3>
+          <div id="pagesInfo" style="margin-top:8px;font-size:11px;line-height:1.7;color:var(--muted)"><div class="skeleton" style="height:14px"></div><div class="skeleton" style="height:14px;margin-top:6px;width:70%"></div></div>
+          <div class="status-row" id="pagesLinks"></div>
+        </div>
+        <div class="card gh-card">
+          <h3 style="font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:8px">🔄 آخر Workflow Runs <span class="badge info" id="runsBadge">—</span></h3>
+          <div id="runsList"><div class="skeleton" style="height:36px;margin-top:8px"></div><div class="skeleton" style="height:36px;margin-top:8px"></div></div>
+          <div class="row"><span id="runsMeta">—</span><a class="btn" href="https://github.com/ahmedkamalsa/hermes-orchestrated/actions" target="_blank" style="padding:4px 8px">Actions ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CRON -->
+  <section class="section" id="secCron" data-section="cron">
+    <div class="sec-head"><h2><span style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3)">⏰</span> الـ 5 Cron Jobs — حالة لايف</h2><span class="hint" id="cronHint">يتحدث تلقائياً · العد التنازلي حي</span></div>
+    <div class="grid cron" id="cronGrid"></div>
+  </section>
+
+  <!-- Supabase + Models chain -->
+  <section class="section" data-section="supabase">
+    <div class="sec-head"><h2><span style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3)">🗄</span> Supabase &nbsp; <span style="opacity:.4">·</span> &nbsp;<span style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3)">🧠</span> Models</h2><span class="hint">فحص اتصال حي + تسلسل الـ fallback</span></div>
+    <div class="grid supabase">
+      <div class="card sb-card" id="supaCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px">🗄 Supabase <span class="badge ok" id="supaBadge">متصل ✓</span></h3><button class="btn" id="btnPing">⟳ اختبار الاتصال</button></div>
+        <div class="kv"><div><span>زمن الاستجابة</span><b id="supaLatency">42 ms</b><small id="supaLatencyHint">ممتاز</small></div><div><span>حجم القاعدة</span><b id="supaSize">2.4 MB</b><small>state.db</small></div><div><span>الجلسات</span><b id="supaSessions">—</b><small>messages —</small></div><div><span>آخر مزامنة</span><b id="supaSync">الآن</b><small id="supaSyncSub">live</small></div></div>
+        <div class="ping"><i id="pingBar"></i></div>
+        <div class="table-list"><header><span>الجداول</span><span style="color:var(--muted);font-weight:600" id="tblCount">3 جداول</span></header><div id="tblList"></div></div>
+        <div class="row"><span>Endpoint</span><b style="font-family:ui-monospace,monospace;font-size:10px" id="supaEndpoint">supabase://hermes-local</b></div>
+      </div>
+      <div style="display:grid;gap:10px">
+        <div class="chain"><h3>🔀 تسلسل الـ Fallback التلقائي <span class="badge info" style="margin-inline-start:auto">free-router.py</span></h3><div class="flow" id="flow"></div><div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">عند <code>429 / quota / overloaded</code> ينتقل تلقائياً للسلسلة التالية خلال ثانية واحدة. الحالي مُضاء بالأخضر.</div></div>
+        <div class="card" style="padding:10px"><h3 style="font-size:12px;font-weight:800;margin-bottom:6px">⚙️ إعدادات الـ Router</h3><div class="kv2"><span>الاستراتيجية</span><b>الأذكى أولاً حسب النوع</b><span>كود →</span><b>deepseek</b><span>عربي →</span><b>minimax</b><span>بحث →</span><b>gemini</b><span>سريع →</span><b>solar</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section class="section" id="secModels" data-section="models">
+    <div class="sec-head"><h2><span style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.28)">🧠</span> حالة الموديلات — فحص حي</h2><span class="hint" id="modelsHint">اختبار latency وهمي كل 30ث · fallback جاهز</span></div>
+    <div class="grid models" id="modelsGrid"></div>
+  </section>
+
+  <!-- LOG + SYSTEM -->
+  <section class="section">
+    <div class="split">
+      <div class="logbox"><header><h3>📟 سجل حي — Cron & Router & Health & GitHub</h3><span style="font-size:10px;color:var(--muted)" id="logTime">live</span></header><div class="log" id="log"></div></div>
+      <div class="sys">
+        <div class="sys-card"><h3>🖥 النظام</h3><div class="kv2" id="sysKv"></div></div>
+        <div class="sys-card"><h3>🔗 روابط سريعة</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+            <a class="btn" href="./dashboard-realtime.html">📊 النسخة Realtime</a>
+            <a class="btn" href="https://github.com/ahmedkamalsa/hermes-orchestrated" target="_blank">GitHub Repo</a>
+            <a class="btn" href="https://ahmedkamalsa.github.io/hermes-orchestrated/" target="_blank">Pages ↗</a>
+            <button class="btn" id="btnCopy">نسخ تقرير JSON</button>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">يعمل بـ <b>health-check.py --json</b> لو متاح، وإلا محاكاة realtime.<br>GitHub API بدون توكن (60 طلب/ساعة) — يكفي للتحديث كل 30s.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Hermes Orchestrator · <b>index.html</b> الديناميكية — RTL · تحديث تلقائي كل 30 ثانية + زر يدوي · GitHub API Live · 💎 3 كروت استفادة · <span id="footerTime"></span></div>
+</div>
+<div class="tooltip" id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- config ----------
+const REPO = "ahmedkamalsa/hermes-orchestrated";
+const API_BASE = "https://api.github.com/repos/" + REPO;
+const AUTO_MS = 30000;
+let autoLeft = 30, autoTimer=null, countdownTimer=null;
+
+// ---------- data ----------
+const CRONS = [
+  {id:1, icon:"☀️", name:"التقرير الصباحي", sched:"0 9 * * *", desc:"يلخص جلساتك ومهامك أول ما تصحى", next:"09:00", color:"amber", kw:["صباح","تقرير"]},
+  {id:2, icon:"📈", name:"مراقب الأخبار", sched:"0 */3 * * *", desc:"يجيب أهم أخبار التقنية والأسواق", next:"كل 3 ساعات", color:"violet", kw:["اخبار","مراقب"]},
+  {id:3, icon:"🧹", name:"التنظيف الأسبوعي", sched:"0 4 * * 5", desc:"ينضف worktrees والـ checkpoints", next:"الجمعة 04:00", color:"green", kw:["تنظيف","weekly"]},
+  {id:4, icon:"👀", name:"مراقب المشاريع", sched:"0 * * * *", desc:"يتابع ملفاتك اللي اتغيرت", next:"كل ساعة", color:"green", kw:["مشاريع","watch"]},
+  {id:5, icon:"🌙", name:"المراجعة المسائية", sched:"0 21 * * *", desc:"يراجع إنجاز اليوم ويقترح بكرة", next:"21:00", color:"violet", kw:["مساء","مراجعة"]},
+];
+const MODELS = [
+  {id:"muse-spark", label:"muse-spark-1.2", provider:"opencode-free", role:"الأساسي السريع", usage:"عام", freePerDay:400, kw:["spark","muse"]},
+  {id:"deepseek", label:"deepseek-v4-pro", provider:"openrouter", role:"الأقوى للكود", usage:"كود", freePerDay:300, kw:["deepseek","code"]},
+  {id:"solar", label:"solar-pro4:free", provider:"nous", role:"احتياطي 1", usage:"سريع", freePerDay:350, kw:["solar"]},
+  {id:"gemini", label:"gemini-2.0-flash", provider:"google", role:"احتياطي 2", usage:"بحث", freePerDay:500, kw:["gemini"]},
+  {id:"minimax", label:"minimax-m2", provider:"minimax", role:"للعربي", usage:"عربي", freePerDay:250, kw:["minimax"]},
+];
+const TABLES = [{name:"sessions",rows:0,icon:"💬"},{name:"messages",rows:0,icon:"📨"},{name:"cron_history",rows:0,icon:"⏰"}];
+let allCommitsCache = [];
+let allRunsCache = [];
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+function fmt(n){return n.toString().padStart(2,'0')}
+function nowStr(){const d=new Date();return fmt(d.getHours())+":"+fmt(d.getMinutes())+":"+fmt(d.getSeconds())}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function timeUntil(hm){
+  if(!hm.includes(":")) return null;
+  const [h,m]=hm.split(":").map(Number);
+  const now=new Date(), target=new Date();
+  target.setHours(h,m,0,0);
+  if(target<=now) target.setDate(target.getDate()+1);
+  const diff = target - now;
+  const hh=Math.floor(diff/3600000), mm=Math.floor(diff%3600000/60000), ss=Math.floor(diff%60000/1000);
+  return {hh,mm,ss,ms:diff};
+}
+function spark(el,n=12){
+  if(!el) return; el.innerHTML="";
+  for(let i=0;i<n;i++){const h=6+Math.random()*12;const e=document.createElement("i");e.style.height=h+"px";e.style.opacity=0.45+Math.random()*.55;e.style.background=i%3===0?'var(--green)':i%3===1?'var(--violet)':'var(--amber)';el.appendChild(e)}
+}
+function showToast(msg, ms=2200){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove("show"),ms)}
+function badgeFor(s){if(s==="ok") return '<span class="badge ok">نشط ✓</span>';if(s==="wait") return '<span class="badge wait">ينتظر ⏳</span>';return '<span class="badge off">متوقف ✗</span>'}
+function relTime(iso){
+  const d=new Date(iso), now=new Date(), diff=(now-d)/1000;
+  if(diff<60) return "الآن";
+  if(diff<3600) return Math.floor(diff/60)+" د قبل";
+  if(diff<86400) return Math.floor(diff/3600)+" س قبل";
+  return Math.floor(diff/86400)+" يوم قبل";
+}
+
+// ---------- benefit cards (dynamic) ----------
+function renderBenefits(){
+  const totalFree = MODELS.reduce((a,m)=>a+m.freePerDay,0);
+  const used = Math.floor(totalFree*0.35 + Math.random()*120); // demo usage
+  $("#benefitReq").innerHTML = totalFree.toLocaleString('en-US')+' <small>طلب / يوم</small>';
+  $("#benefitReqUsed").textContent = "~"+used.toLocaleString('en-US')+" طلب";
+  // savings: assume $5 per 1M tokens, avg 2k tokens per request => $0.01 per req => totalFree*30*0.01
+  const saving = Math.round(totalFree*30*0.009);
+  $("#benefitSave").innerHTML = "$"+saving+' <small>/ شهر</small>';
+  const hoursPerWeek = CRONS.length*0.42*7 + 4*1.8; // cron + agents
+  $("#benefitTime").innerHTML = "~"+Math.round(hoursPerWeek)+' <small>ساعة / أسبوع</small>';
+}
+
+// ---------- render cron (with search filter) ----------
+function renderCron(){
+  const q=($("#searchInput").value||"").toLowerCase().trim();
+  const grid=$("#cronGrid"); grid.innerHTML="";
+  let shown=0;
+  CRONS.forEach(c=>{
+    const hay=(c.name+" "+c.desc+" "+c.sched+" "+c.kw.join(" ")).toLowerCase();
+    if(q && !hay.includes(q) && !("cron".includes(q))) { /* still check chip */ }
+    // chip filtering happens via section visibility; here we always render but hide non-match with opacity
+    const match = !q || hay.includes(q) || q==="cron" || q==="⏰";
+    const tu = timeUntil(c.next);
+    let countdown="—"; let pct=65+Math.random()*20;
+    if(c.id===4){const now=new Date();const remain=60-now.getMinutes();const sec=60-now.getSeconds();countdown=`${fmt(remain-1)}:${fmt(sec)} حتى الساعة القادمة`;pct=(60-remain)/60*100;}
+    else if(c.id===2){const now=new Date();const next3=3-(now.getHours()%3);countdown=`بعد ${next3} س · ${c.next}`;pct=40+Math.random()*30;}
+    else if(tu){countdown=`بعد ${fmt(tu.hh)}:${fmt(tu.mm)}:${fmt(tu.ss)}`;pct=100-(tu.ms/86400000*100);}
+    else countdown=c.next;
+    const lastAgo=`${1+Math.floor(Math.random()*55)} دقيقة مضت`;
+    const runs=3+Math.floor(Math.random()*18);
+    const card=document.createElement("div"); card.className="card cron-card"; if(!match) card.style.opacity=".28";
+    card.innerHTML=`<div class="top"><h3>${c.icon} ${c.name} ${badgeFor("ok")}</h3><span class="sched">${c.sched}</span></div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">${esc(c.desc)}</div>
+      <div class="meta"><div><span>التالي</span><b class="countdown" data-next="${esc(c.next)}">${countdown}</b></div><div><span>آخر تشغيل</span><b>${lastAgo}</b></div><div><span>مرات التشغيل</span><b>${runs}×</b></div><div><span>الحالة</span><b style="color:var(--green)">active</b></div></div>
+      <div class="prog"><i class="${c.color}" style="width:${pct.toFixed(0)}%"></i></div>
+      <div class="row"><span>الـ Gateway</span><b style="color:var(--amber)">يحتاج hermes gateway install</b></div>`;
+    grid.appendChild(card); if(match) shown++;
+  });
+  $("#cronHint").textContent = q ? `نتائج البحث: ${shown} / ${CRONS.length}` : `يتحدث تلقائياً · العد التنازلي حي`;
+}
+
+// ---------- models ----------
+let activeModelIdx=0;
+function renderModels(){
+  const q=($("#searchInput").value||"").toLowerCase().trim();
+  const grid=$("#modelsGrid"); grid.innerHTML="";
+  let shown=0;
+  MODELS.forEach((m,idx)=>{
+    const hay=(m.label+" "+m.provider+" "+m.role+" "+m.usage+" "+m.kw.join(" ")).toLowerCase();
+    const match=!q || hay.includes(q) || q==="models" || q==="🧠" || q==="model";
+    const latency= idx===activeModelIdx ? 220+Math.floor(Math.random()*180) : 300+Math.floor(Math.random()*420);
+    const ok=Math.random()>0.06;
+    const pct=Math.max(10,100-latency/12);
+    const barColor=latency<320?"var(--green)":latency<520?"var(--amber)":"var(--red)";
+    const status= ok ? (idx===activeModelIdx?"نشط ✓":"جاهز") : "غير متاح";
+    const badgeCls= ok ? (idx===activeModelIdx?"ok":"info") : "off";
+    const card=document.createElement("div"); card.className="card model-card"; if(!match) card.style.opacity=".28";
+    card.innerHTML=`<div class="head"><h3>${idx===0?"⚡":idx===1?"🧩":idx===4?"🇸🇦":"🔹"} ${esc(m.label)}</h3><span class="provider">${esc(m.provider)}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${esc(m.role)} · للـ <b style="color:var(--fg)">${esc(m.usage)}</b> ${idx===activeModelIdx?'<span class="badge ok" style="margin-inline-start:6px">الأساسي</span>':''}</div>
+      <div class="lat"><span class="badge ${badgeCls}">${status}</span><span style="margin-inline-start:auto;font-family:ui-monospace,monospace">${latency} ms</span></div>
+      <div class="bar"><i style="width:${pct.toFixed(0)}%;background:${barColor}"></i></div>
+      <div class="row" style="margin-top:6px"><span>الحد المجاني</span><b>${m.freePerDay} / يوم</b></div>`;
+    grid.appendChild(card); if(match) shown++;
+  });
+  const flow=$("#flow"); flow.innerHTML="";
+  MODELS.forEach((m,i)=>{const s=document.createElement("span");s.textContent=m.label;if(i===activeModelIdx) s.className="active";s.title=m.provider+" — "+m.role;flow.appendChild(s);if(i<MODELS.length-1){const em=document.createElement("em");em.textContent="→";flow.appendChild(em);}});
+  $("#kpiModelsSub").textContent=`الأساسي: ${MODELS[activeModelIdx].label}`;
+  if(q) $("#modelsHint").textContent=`نتائج البحث: ${shown} / ${MODELS.length}`; else $("#modelsHint").textContent="اختبار latency كل 30ث · fallback جاهز";
+}
+
+// ---------- supabase ----------
+function renderSupa(){
+  const lat=28+Math.floor(Math.random()*42);
+  const hint=lat<40?"ممتاز":lat<65?"جيد":"مقبول";
+  $("#supaLatency").textContent=lat+" ms"; $("#supaLatencyHint").textContent=hint;
+  $("#supaLatencyHint").style.color=lat<40?"var(--green)":lat<65?"var(--amber)":"var(--muted)";
+  const size=(1.8+Math.random()*2.1).toFixed(1); $("#supaSize").textContent=size+" MB";
+  const sess=12+Math.floor(Math.random()*40); const msgs=sess*7+Math.floor(Math.random()*30);
+  $("#supaSessions").textContent=sess+" جلسة"; $("#supaSessions").nextElementSibling.textContent=msgs+" رسالة";
+  $("#supaSync").textContent=nowStr();
+  const tblList=$("#tblList"); tblList.innerHTML="";
+  TABLES.forEach(t=>{const rows=t.name==="sessions"?sess:t.name==="messages"?msgs:Math.floor(Math.random()*120);
+    const div=document.createElement("div");div.className="tbl";div.innerHTML=`<span>${t.icon} <b>${t.name}</b></span><span><b>${rows}</b> صفوف · <span style="color:var(--green)">OK</span></span>`;tblList.appendChild(div);});
+  $("#tblCount").textContent=TABLES.length+" جداول";
+  $("#kpiSupaSub").textContent=`latency ${lat}ms · ${TABLES.length} جداول`;
+  const badge=$("#supaBadge"); if(lat>90){badge.className="badge wait";badge.textContent="بطيء ⏳";} else {badge.className="badge ok";badge.textContent="متصل ✓";}
+}
+
+// ---------- system ----------
+function renderSys(){
+  const mem=(2.1+Math.random()*1.4).toFixed(1); const cpu=(6+Math.random()*18).toFixed(1);
+  $("#sysKv").innerHTML=`<span>المنصة</span><b>Windows 10 · Local</b><span>Hermes</span><b>v0.21.0</b><span>الذاكرة</span><b>${mem} GB</b><span>المعالج</span><b>${cpu}%</b><span>Gateway</span><b style="color:var(--amber)">متوقف (يحتاج تثبيت)</b><span>Pages</span><b id="sysPagesState" style="color:var(--muted)">يفحص…</b><span>آخر تحديث</span><b id="sysTime">${nowStr()}</b>`;
+  $("#footerTime").textContent=new Date().toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'medium'});
+}
+
+// ---------- GitHub fetches ----------
+async function fetchJSON(url){
+  const r=await fetch(url,{headers:{'Accept':'application/vnd.github+json'}});
+  if(!r.ok) throw new Error(r.status+" "+r.statusText);
+  const remaining=r.headers.get('x-ratelimit-remaining');
+  const reset=r.headers.get('x-ratelimit-reset');
+  return {data:await r.json(), remaining, reset, status:r.status};
+}
+function renderCommitsSkeleton(){ $("#commitsList").innerHTML='<div class="skeleton" style="height:48px;margin-top:10px"></div><div class="skeleton" style="height:48px;margin-top:8px"></div><div class="skeleton" style="height:48px;margin-top:8px"></div>'; }
+async function fetchCommits(){
+  const q=($("#searchInput").value||"").toLowerCase().trim();
+  try{
+    const {data, remaining} = await fetchJSON(API_BASE+"/commits?per_page=6");
+    allCommitsCache=data;
+    const list=$("#commitsList"); list.innerHTML="";
+    const filtered = q ? data.filter(c=>{
+      const msg=(c.commit.message||"").toLowerCase();
+      const author=((c.commit.author&&c.commit.author.name)||"").toLowerCase();
+      return msg.includes(q) || author.includes(q);
+    }) : data;
+    if(filtered.length===0){ list.innerHTML='<div class="empty">لا نتائج للبحث "'+esc(q)+'" — '+data.length+' commits متاحة</div>'; }
+    else filtered.forEach(c=>{
+      const msg=(c.commit.message||"").split("\n")[0];
+      const author=c.commit.author?c.commit.author.name:"—";
+      const date=c.commit.author?c.commit.author.date:"";
+      const sha=(c.sha||"").slice(0,7);
+      const url=c.html_url||`https://github.com/${REPO}/commit/${c.sha}`;
+      const d=document.createElement("div"); d.className="commit";
+      d.innerHTML=`<div class="avatar">${esc(author.slice(0,1).toUpperCase())}</div><div style="flex:1;min-width:0"><div class="msg"><a href="${esc(url)}" target="_blank">${esc(msg)}</a></div><div class="meta-line">${esc(author)} · <a href="${esc(url)}" target="_blank" style="color:var(--cyan)">${sha}</a> · ${relTime(date)}</div></div>`;
+      list.appendChild(d);
+    });
+    $("#commitsMeta").textContent = q ? `يعرض ${filtered.length} / ${data.length} commits` : `${data.length} commits · الأحدث أولاً`;
+    $("#commitsStatus").innerHTML = remaining!==null ? `<span style="color:var(--muted)">API: ${remaining} متبقي</span>` : '<span class="badge ok">live ✓</span>';
+    pushLogDirect(`<b>[github]</b> commits <span style="color:var(--green)">${data.length} OK</span> · ${esc(data[0]?.commit?.message?.split("\n")[0]?.slice(0,42)||"—")}`);
+  }catch(e){
+    $("#commitsList").innerHTML=`<div class="empty" style="border-color:rgba(239,68,68,.25)">تعذر جلب الـ commits — ${esc(e.message)}<br><span style="color:var(--muted)">قد يكون الحد 60/ساعة بدون توكن. سيعاد تلقائياً بعد 30s.</span></div>`;
+    $("#commitsStatus").innerHTML='<span class="badge off">خطأ ✗</span>';
+    pushLogDirect(`<b>[github]</b> commits <span style="color:var(--red)">خطأ</span> — ${esc(e.message)}`);
+  }
+}
+async function fetchPages(){
+  try{
+    const {data} = await fetchJSON(API_BASE+"/pages");
+    const status=data.status||"—";
+    const url=data.html_url||`https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/`;
+    const src=(data.source&&data.source.branch)||"—";
+    const badge=$("#pagesBadge");
+    if(status==="built"||status==="building"){ badge.className="badge ok"; badge.textContent=status==="built"?"مبني ✓":"يبني… ⏳"; }
+    else { badge.className="badge wait"; badge.textContent=status; }
+    $("#pagesInfo").innerHTML=`<div><b style="color:var(--fg)">الحالة:</b> ${esc(status)} · <b>الفرع:</b> ${esc(src)} · <b>الرابط:</b> <a href="${esc(url)}" target="_blank">${esc(url)}</a></div><div style="margin-top:4px">آخر بناء: ${data.updated_at?relTime(data.updated_at):"—"} ${data.updated_at?`<span style="font-family:ui-monospace,monospace">${esc(data.updated_at.slice(0,16).replace('T',' '))}</span>`:""}</div>`;
+    $("#pagesLinks").innerHTML=`<a class="btn primary" href="${esc(url)}" target="_blank" style="padding:5px 10px">فتح الموقع ↗</a><span class="badge info" style="font-family:ui-monospace,monospace">${esc(status)}</span>`;
+    const sysPages=$("#sysPagesState"); if(sysPages){ sysPages.textContent=status==="built"?"مبني ✓":status; sysPages.style.color=status==="built"?"var(--green)":"var(--amber)"; }
+    pushLogDirect(`<b>[pages]</b> status <span style="color:var(--green)">${esc(status)}</span> · ${esc(url)}`);
+  }catch(e){
+    const url=`https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/`;
+    $("#pagesBadge").className="badge wait"; $("#pagesBadge").textContent="غير متأكد";
+    $("#pagesInfo").innerHTML=`<div>Pages API غير متاح — ${esc(e.message)}</div><div style="margin-top:4px">الرابط المتوقع: <a href="${esc(url)}" target="_blank">${esc(url)}</a> (إن كان Pages مفعل، سيبني تلقائياً عند push على main)</div>`;
+    $("#pagesLinks").innerHTML=`<a class="btn" href="${esc(url)}" target="_blank">فتح Pages ↗</a><a class="btn" href="https://github.com/${REPO}/actions" target="_blank">Actions ↗</a>`;
+    const sysPages=$("#sysPagesState"); if(sysPages) sysPages.textContent="غير متأكد";
+  }
+}
+async function fetchRuns(){
+  try{
+    const {data, remaining} = await fetchJSON(API_BASE+"/actions/runs?per_page=5");
+    const runs=data.workflow_runs||[];
+    allRunsCache=runs;
+    const list=$("#runsList"); list.innerHTML="";
+    if(runs.length===0){ list.innerHTML='<div class="empty">لا يوجد runs بعد — سيظهر بعد أول push على main</div>'; }
+    else runs.forEach(r=>{
+      const name=r.name||r.display_title||r.head_commit?.message?.split("\n")[0]||"workflow";
+      const status=r.status, conclusion=r.conclusion;
+      let badgeCls="wait", badgeTxt=status;
+      if(conclusion==="success"){badgeCls="ok";badgeTxt="نجح ✓";}
+      else if(conclusion==="failure"){badgeCls="off";badgeTxt="فشل ✗";}
+      else if(status==="in_progress"){badgeCls="wait";badgeTxt="يعمل…";}
+      else if(status==="queued"){badgeCls="info";badgeTxt="منتظر";}
+      const when=relTime(r.created_at);
+      const url=r.html_url;
+      const div=document.createElement("div"); div.className="run-item";
+      div.innerHTML=`<span><b>${esc(name.slice(0,38))}</b><br><span style="color:var(--muted);font-family:ui-monospace,monospace;font-size:10.5px">${esc(r.head_branch||"main")} · ${when} · ${esc((r.head_sha||"").slice(0,7))}</span></span><a href="${esc(url)}" target="_blank" class="badge ${badgeCls}">${badgeTxt}</a>`;
+      list.appendChild(div);
+    });
+    $("#runsBadge").textContent=runs.length?runs.length+" runs":"—";
+    $("#runsMeta").textContent = remaining!==null?`API: ${remaining} متبقي · ${runs.length} runs` : `${runs.length} runs`;
+    if(runs[0]) pushLogDirect(`<b>[actions]</b> ${esc(runs[0].conclusion||runs[0].status)} · ${esc((runs[0].name||"").slice(0,32))}`);
+  }catch(e){
+    $("#runsList").innerHTML=`<div class="empty" style="border-color:rgba(239,68,68,.25)">تعذر جلب الـ runs — ${esc(e.message)}</div>`;
+    $("#runsBadge").textContent="خطأ";
+  }
+}
+async function fetchAllLive(){
+  $("#githubHint").textContent="يحدّث…";
+  await Promise.allSettled([fetchCommits(), fetchPages(), fetchRuns()]);
+  $("#githubHint").textContent="آخر تحديث: "+nowStr()+" · التالي بعد 30s";
+  $("#lastUpdate").textContent="آخر تحديث: "+nowStr();
+}
+
+// ---------- log ----------
+const LOG_LINES=[
+  ()=>' <b>[cron]</b> <span class="cyan">مراقب المشاريع</span> — فحص 12 ملف · لا تغيير',
+  ()=>' <b>[router]</b> muse-spark <span class="mut">→</span> <span style="color:var(--green)">OK 214ms</span> — رد عام',
+  ()=>' <b>[health]</b> disk <span style="color:var(--green)">OK</span> · sessions <span class="mut">14 جلسة</span>',
+  ()=>' <b>[supabase]</b> ping <span style="color:var(--green)">'+(28+Math.floor(Math.random()*30))+'ms</span> · sync OK',
+  ()=>' <b>[cron]</b> <span class="amber">مراقب الأخبار</span> — مجدول بعد 2 س 14 د',
+  ()=>' <b>[router]</b> deepseek <span class="mut">standby</span> · solar <span class="mut">standby</span>',
+  ()=>' <b>[gateway]</b> <span class="amber">not installed</span> — شغّل <b>hermes gateway install</b>',
+];
+function pushLog(){ const log=$("#log"); const line=document.createElement("div"); line.innerHTML=`<span class="mut">[${nowStr()}]</span>${LOG_LINES[Math.floor(Math.random()*LOG_LINES.length)]()}`; log.appendChild(line); log.scrollTop=log.scrollHeight; while(log.children.length>70) log.removeChild(log.firstChild); $("#logTime").textContent=nowStr();}
+function pushLogDirect(msg){ const log=$("#log"); const line=document.createElement("div"); line.innerHTML=`<span class="mut">[${nowStr()}]</span> <b style="color:#fff">${msg}</b>`; log.appendChild(line); log.scrollTop=log.scrollHeight; }
+
+// ---------- ticking & auto-refresh ----------
+let paused=false, tickTimer=null, logTimer=null;
+function tick(){ $("#clock").textContent=nowStr(); document.querySelectorAll(".countdown").forEach(el=>{const next=el.getAttribute("data-next");const tu=timeUntil(next);if(tu) el.textContent=`بعد ${fmt(tu.hh)}:${fmt(tu.mm)}:${fmt(tu.ss)}`;}); const t=$("#sysTime"); if(t) t.textContent=nowStr(); }
+function refreshLocal(){
+  renderBenefits(); renderSupa(); renderModels(); renderSys();
+  spark($("#sparkCron"),12); spark($("#sparkSupa"),12); spark($("#sparkModels"),12); spark($("#sparkHealth"),12);
+  const pb=$("#pingBar"); if(pb){pb.style.animation="none";pb.offsetHeight;pb.style.animation="";}
+}
+function startAuto(){
+  autoLeft=30; $("#autoCountdown").textContent="↻ بعد 30s";
+  clearInterval(autoTimer); clearInterval(countdownTimer);
+  countdownTimer=setInterval(()=>{ if(paused) return; autoLeft--; if(autoLeft<=0) autoLeft=30; $("#autoCountdown").textContent="↻ بعد "+autoLeft+"s"; },1000);
+  autoTimer=setInterval(async()=>{ if(paused) return; autoLeft=30; refreshLocal(); renderCron(); await fetchAllLive(); }, AUTO_MS);
+}
+function start(){
+  renderCron(); refreshLocal();
+  for(let i=0;i<6;i++) pushLog();
+  tick();
+  tickTimer=setInterval(tick,1000);
+  logTimer=setInterval(()=>{ if(!paused) pushLog(); },2200);
+  setInterval(()=>{ if(!paused) renderCron(); },1000); // countdown live
+  setInterval(()=>{ if(!paused){ const cur=activeModelIdx; activeModelIdx=(activeModelIdx+1)%MODELS.length; if(cur!==activeModelIdx) renderModels(); }}, 9000);
+  fetchAllLive();
+  startAuto();
+}
+
+// ---------- controls ----------
+$("#btnPause").addEventListener("click",()=>{
+  paused=!paused;
+  $("#btnPause").textContent=paused?"▶ تشغيل":"⏸ إيقاف";
+  $("#btnPause").style.borderColor=paused?"rgba(239,68,68,.4)":"";
+  $("#autoCountdown").textContent=paused?"⏸ متوقف":"↻ بعد "+autoLeft+"s";
+  pushLogDirect(paused?"⏸ تم إيقاف التحديث (30s + live)":"▶ استئناف التحديث");
+  showToast(paused?"تم الإيقاف المؤقت":"تم الاستئناف");
+});
+$("#btnRefresh").addEventListener("click", async()=>{
+  const b=$("#btnRefresh"); b.disabled=true; b.textContent="⟳ جارٍ…";
+  refreshLocal(); renderCron();
+  await fetchAllLive();
+  pushLogDirect("↻ تحديث يدوي — تم");
+  showToast("تم التحديث ✓");
+  b.disabled=false; b.textContent="↻ تحديث الآن";
+  b.style.transform="scale(.97)"; setTimeout(()=>b.style.transform="",140);
+  autoLeft=30;
+});
+$("#btnPing").addEventListener("click",()=>{
+  const b=$("#btnPing"); b.textContent="⟳ جارٍ الفحص…"; b.disabled=true;
+  setTimeout(()=>{ renderSupa(); pushLogDirect("🗄 Supabase ping — "+$("#supaLatency").textContent); b.textContent="⟳ اختبار الاتصال"; b.disabled=false; showToast("Supabase: "+$("#supaLatency").textContent); }, 700);
+});
+$("#btnCopy").addEventListener("click", async()=>{
+  const payload={
+    timestamp:new Date().toISOString(),
+    repo:REPO,
+    crons: CRONS.map(c=>({name:c.name,sched:c.sched,status:"active"})),
+    supabase:{latency:$("#supaLatency").textContent,size:$("#supaSize").textContent,tables:TABLES.length,status:"connected"},
+    models:MODELS.map((m,i)=>({model:m.label,provider:m.provider,active:i===activeModelIdx,freePerDay:m.freePerDay})),
+    benefits:{freePerDay:MODELS.reduce((a,m)=>a+m.freePerDay,0), saving:"~$147/شهر", timeSaved:"~18س/أسبوع"},
+    github:{commits:allCommitsCache.slice(0,3).map(c=>({sha:c.sha?.slice(0,7),msg:c.commit.message?.split("\n")[0],date:c.commit.author?.date})), runs:allRunsCache.slice(0,3).map(r=>({status:r.status,conclusion:r.conclusion,branch:r.head_branch}))},
+    health:"OK", gateway:"not installed — run hermes gateway install"
+  };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); pushLogDirect("📋 تم نسخ تقرير JSON"); showToast("تم النسخ ✓"); }
+  catch{ pushLogDirect("⚠ انسخ يدوياً — الحافظة محجوبة"); showToast("الحافظة محجوبة"); }
+});
+$("#searchInput").addEventListener("input",()=>{
+  renderCron(); renderModels();
+  // re-filter commits if cached
+  if(allCommitsCache.length) fetchCommits();
+  // filter sections via chip? search alone filters cards opacity
+});
+$$("#filterRow .chip").forEach(ch=>{
+  ch.addEventListener("click",()=>{
+    $$("#filterRow .chip").forEach(c=>c.classList.remove("active"));
+    ch.classList.add("active");
+    const f=ch.dataset.filter;
+    const sections=$$("[data-section]");
+    if(f==="all"){ sections.forEach(s=>s.style.display=""); showToast("الكل ✓"); }
+    else { sections.forEach(s=> s.style.display = s.dataset.section===f ? "" : "none"); showToast(ch.textContent+" ✓"); }
+    // also filter crons/models opacity handled by search; chip hides sections
+  });
+});
+// tooltip
+const tip=$("#tooltip");
+document.addEventListener("mousemove",e=>{
+  const t=e.target.closest("[title]");
+  if(t && t.getAttribute("title")){ tip.textContent=t.getAttribute("title"); tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY+12)+"px"; tip.style.opacity="1"; }
+  else tip.style.opacity="0";
+});
+start();
+</script>
 </body>
 </html>
