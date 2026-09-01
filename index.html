@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto; background:var(--card, #111); color:var(--foreground, #eee); padding:20px}
+h1{font-size:20px; margin-bottom:4px}
+.sub{color:var(--muted-foreground, #999); font-size:13px; margin-bottom:16px}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px}
+.card{border:1px solid var(--border, #333); border-radius:12px; padding:14px; background:var(--card, #1a1a1a)}
+.card h3{font-size:14px; margin-bottom:6px; display:flex; align-items:center; gap:8px}
+.badge{font-size:11px; padding:2px 8px; border-radius:20px; background:#f59e0b; color:#000; font-weight:700}
+.badge.done{background:#22c55e}
+.desc{font-size:12px; color:var(--muted-foreground, #aaa); line-height:1.6}
+.stats{display:flex; gap:10px; margin-bottom:16px}
+.stat{flex:1; border:1px solid var(--border, #333); border-radius:10px; padding:10px; text-align:center}
+.stat b{font-size:22px; display:block}
+.stat span{font-size:11px; color:var(--muted-foreground, #999)}
+.log{border:1px solid var(--border, #333); border-radius:10px; padding:12px; font-family:monospace; font-size:11px; line-height:1.7; background:#0a0a0a; color:#a3e635}
+.log b{color:#fff}
+.footer{margin-top:14px; font-size:11px; color:var(--muted-foreground, #777); text-align:center}
+.pulse{width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; animation:pulse 1.5s infinite}
+@keyframes pulse{0%{opacity:1} 50%{opacity:0.3} 100%{opacity:1}}
+</style>
+</head>
+<body>
+<h1><span class="pulse"></span> مركز قيادة الوكلاء — شغّال الآن</h1>
+<div class="sub">4 وكلاء متوازيين بصلاحيات كاملة | Hermes v0.21.0 | Windows Local Backend | muse-spark-1.2</div>
+
+<div class="stats">
+<div class="stat"><b>4</b><span>وكلاء نشطين</span></div>
+<div class="stat"><b>51</b><span>Skill جاهزة</span></div>
+<div class="stat"><b>0 → 5</b><span>Cron Jobs (قيد الإنشاء)</span></div>
+<div class="stat"><b>∞</b><span>صلاحيات كاملة</span></div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h3>🤖 الوكيل 1 <span class="badge">يعمل</span></h3>
+<div class="desc"><b>مهندس الأتمتة</b><br>ينشئ 5 cron jobs: تقرير صباحي 9ص، مراقب كل 3 ساعات، تنظيف أسبوعي، مراقب مشاريع كل ساعة، مراجعة مسائية.<br>الأمر: <code>hermes cron create</code></div>
+</div>
+<div class="card">
+<h3>🔌 الوكيل 2 <span class="badge">يعمل</span></h3>
+<div class="desc"><b>مهندس التكاملات</b><br>يفعّل MCP servers + Computer Use + الأدوات المعطلة (stt/context_engine) + مشروع جديد + اختبار Browser.<br>الهدف: فتح كل القنوات.</div>
+</div>
+<div class="card">
+<h3>🧠 الوكيل 3 <span class="badge">يعمل</span></h3>
+<div class="desc"><b>مهندس المعرفة</b><br>يبني الذاكرة (SUPERMEMORY)، ينشئ Skill مخصص <code>orchestrator-ops</code>، يحسّن SOUL.md، يقترح skills من الـ Hub.</div>
+</div>
+<div class="card">
+<h3>⚡ الوكيل 4 <span class="badge">يعمل</span></h3>
+<div class="desc"><b>مهندس التحسين</b><br>يعمل security audit + تحليل insights + تحسين config.yaml + سكريبت health-check.py + تنظيف checkpoints.</div>
+</div>
+</div>
+
+<div class="log">
+<b>› orchestrator (أنت):</b> موزّع المهام الرئيسي — يراقب الـ 4 وكلاء، يمنع التعارض، يجمع النتائج<br>
+<b>› live transcripts:</b> كل وكيل يكتب في ملف منفصل تحت <code>cache/delegation/live/deleg_73b30ec9/</code><br>
+<b>› الصلاحيات:</b> terminal + file + browser + computer_use + delegation + cronjob + memory — كلها مفتوحة<br>
+<b>› التالي:</b> أول ما يخلصوا، هجمّع تقرير موحّد وأسلّمك لوحة تحكم نهائية + ما يمكن عمله بعد التطوير
+</div>
+
+<div class="footer">الوكلاء يعملون في الخلفية — تقدر تكمّل كلامك عادي وأنا أتابعهم. لو عايز توجّه وكيل معيّن قولي.</div>
+</body>
+</html>
