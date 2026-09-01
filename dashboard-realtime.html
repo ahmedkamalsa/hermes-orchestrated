@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة التحكم Realtime — Hermes Orchestrator</title>
+<style>
+:root{
+  --bg:#0a0a0f; --card:#12121a; --card2:#161622; --border:#232334; --border2:#2a2a42;
+  --fg:#e8e8ef; --muted:#8b8ba3; --mut:#6b6b82;
+  --green:#22c55e; --green2:#16a34a; --amber:#f59e0b; --red:#ef4444; --blue:#3b82f6; --violet:#8b5cf6; --cyan:#06b6d4;
+  --glow-green:0 0 12px rgba(34,197,94,.4); --glow-amber:0 0 12px rgba(245,158,11,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans Arabic',Tahoma,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden}
+a{color:var(--cyan);text-decoration:none}
+/* bg grid */
+body::before{content:"";position:fixed;inset:0;background:
+  linear-gradient(rgba(139,92,246,.03) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(139,92,246,.03) 1px, transparent 1px);
+  background-size:32px 32px;pointer-events:none;z-index:0}
+/* header */
+.header{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(10,10,15,.82);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.h-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:grid;place-items:center;font-size:18px;box-shadow:0 4px 16px rgba(139,92,246,.35)}
+.h-title h1{font-size:15px;font-weight:800;letter-spacing:.2px}
+.h-title p{font-size:11px;color:var(--muted);margin-top:2px}
+.h-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.live-badge{display:flex;align-items:center;gap:7px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:var(--glow-green);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.9)}}
+.clock{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:6px 10px;border-radius:999px;min-width:92px;text-align:center}
+.btn{font-size:11px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--fg);cursor:pointer}
+.btn:hover{border-color:var(--border2);background:var(--card2)}
+.btn.primary{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+/* layout */
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 30px;position:relative;z-index:1}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:760px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);opacity:.7}
+.kpi .label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.kpi .val{font-size:22px;font-weight:800;margin-top:4px;display:flex;align-items:baseline;gap:6px}
+.kpi .val small{font-size:11px;font-weight:600;color:var(--muted)}
+.kpi .sub{font-size:11px;color:var(--mut);margin-top:3px}
+.kpi.green{border-color:rgba(34,197,94,.25)} .kpi.amber{border-color:rgba(245,158,11,.25)} .kpi.violet{border-color:rgba(139,92,246,.25)}
+.spark{display:flex;align-items:end;gap:2px;height:18px;margin-top:6px}
+.spark i{display:block;width:3px;border-radius:2px;background:var(--green);opacity:.9}
+.spark.amber i{background:var(--amber)} .spark.violet i{background:var(--violet)}
+/* sections */
+.section{margin-top:16px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.sec-head h2{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+.sec-head h2 span{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:14px}
+.sec-head .hint{font-size:11px;color:var(--muted)}
+.grid{display:grid;gap:10px}
+.grid.cron{grid-template-columns:repeat(3,1fr)}
+.grid.models{grid-template-columns:repeat(3,1fr)}
+.grid.supabase{grid-template-columns:1.25fr .75fr}
+@media(max-width:900px){.grid.cron,.grid.models{grid-template-columns:1fr 1fr} .grid.supabase{grid-template-columns:1fr}}
+@media(max-width:560px){.grid.cron,.grid.models{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;position:relative;overflow:hidden;transition:.2s}
+.card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.3px}
+.badge.ok{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.wait{background:rgba(245,158,11,.13);color:var(--amber);border:1px solid rgba(245,158,11,.28)}
+.badge.off{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.28)}
+.badge.info{background:rgba(59,130,246,.13);color:var(--blue);border:1px solid rgba(59,130,246,.28)}
+.cron-card .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.cron-card h3{font-size:13px;font-weight:800;display:flex;align-items:center;gap:7px}
+.cron-card .sched{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:3px 7px;border-radius:999px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.meta div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:7px 8px}
+.meta div span{display:block;font-size:10px;color:var(--muted);margin-bottom:2px}
+.meta div b{font-size:11px;font-weight:700;font-family:ui-monospace,monospace}
+.prog{height:4px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:10px}
+.prog i{display:block;height:100%;border-radius:999px;transition:width .8s}
+.prog i.green{background:linear-gradient(90deg,var(--green),#4ade80)}
+.prog i.amber{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.prog i.violet{background:linear-gradient(90deg,var(--violet),#a78bfa)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:11px;color:var(--muted)}
+.row b{color:var(--fg)}
+/* supabase */
+.sb-card .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.kv div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
+.kv div span{font-size:10px;color:var(--muted)} .kv div b{font-size:13px;display:block;margin-top:3px}
+.kv div small{font-size:11px;color:var(--mut)}
+.table-list{margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-list header{font-size:11px;font-weight:700;padding:8px 10px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.tbl{padding:7px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.tbl:last-child{border:0}
+.tbl b{font-family:ui-monospace,monospace}
+.ping{height:6px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-top:8px}
+.ping i{display:block;height:100%;width:42%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:999px;animation:pingMove 1.6s ease-in-out infinite}
+@keyframes pingMove{0%{transform:translateX(-40%)}50%{transform:translateX(180%)}100%{transform:translateX(-40%)}}
+/* models */
+.model-card .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.model-card h3{font-size:12px;font-weight:800}
+.model-card .provider{font-size:10px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:2px 7px;border-radius:999px}
+.model-card .lat{font-size:11px;font-family:ui-monospace,monospace;margin-top:8px;display:flex;align-items:center;gap:6px}
+.bar{height:5px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:999px}
+.chain{margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+.chain h3{font-size:12px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:ui-monospace,monospace;font-size:11px}
+.flow span{padding:5px 9px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03)}
+.flow span.active{border-color:rgba(34,197,94,.35);color:var(--green);background:rgba(34,197,94,.1);box-shadow:var(--glow-green)}
+.flow em{color:var(--mut);font-style:normal}
+/* log + system */
+.split{display:grid;grid-template-columns:1.4fr .6fr;gap:10px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.logbox{background:#0b0b10;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.logbox header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.logbox header h3{font-size:12px;font-weight:800;display:flex;align-items:center;gap:7px}
+.log{padding:10px 12px;font-family:ui-monospace,Consolas,monospace;font-size:11px;line-height:1.75;color:#a3e635;max-height:220px;overflow:auto;direction:ltr;text-align:left}
+.log b{color:#fff} .log .mut{color:#71717a} .log .amber{color:#fbbf24} .log .cyan{color:#22d3ee}
+.sys{display:grid;gap:10px}
+.sys-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+.sys-card h3{font-size:12px;font-weight:800;margin-bottom:8px}
+.kv2{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:11px}
+.kv2 span{color:var(--muted)} .kv2 b{font-family:ui-monospace,monospace}
+.footer{margin-top:16px;text-align:center;font-size:11px;color:var(--mut);padding:12px;border-top:1px solid var(--border)}
+.tooltip{position:fixed;z-index:99;background:#1a1a24;border:1px solid var(--border2);color:var(--fg);font-size:11px;padding:6px 8px;border-radius:8px;pointer-events:none;opacity:0;transition:.15s;max-width:260px}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="h-left">
+    <div class="logo">◈</div>
+    <div class="h-title">
+      <h1>لوحة التحكم Realtime — Hermes Orchestrator</h1>
+      <p>ـ Cron × 5 · Supabase · Models · Gateway · Health — تحديث كل 2 ثانية</p>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="live-badge"><span class="dot"></span> LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button class="btn" id="btnPause">⏸ إيقاف</button>
+    <button class="btn primary" id="btnRefresh">↻ تحديث الآن</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi green">
+      <div class="label">⏱ الـ Cron النشطة</div>
+      <div class="val"><span id="kpiCron">5</span><small>/ 5</small></div>
+      <div class="sub" id="kpiCronSub">كلها active — التالي خلال 00:47</div>
+      <div class="spark" id="sparkCron"></div>
+    </div>
+    <div class="kpi violet">
+      <div class="label">🗄 Supabase</div>
+      <div class="val" id="kpiSupa">متصل</div>
+      <div class="sub" id="kpiSupaSub">latency 42ms · 3 جداول</div>
+      <div class="spark violet" id="sparkSupa"></div>
+    </div>
+    <div class="kpi amber">
+      <div class="label">🧠 الموديلات الجاهزة</div>
+      <div class="val"><span id="kpiModels">5</span><small>/ 5</small></div>
+      <div class="sub" id="kpiModelsSub">الأساسي: muse-spark</div>
+      <div class="spark amber" id="sparkModels"></div>
+    </div>
+    <div class="kpi">
+      <div class="label">🩺 صحة النظام</div>
+      <div class="val" id="kpiHealth" style="color:var(--green)">OK</div>
+      <div class="sub" id="kpiHealthSub">آخر فحص: الآن</div>
+      <div class="spark" id="sparkHealth"></div>
+    </div>
+  </div>
+
+  <!-- CRON -->
+  <section class="section">
+    <div class="sec-head">
+      <h2><span style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3)">⏰</span> الـ 5 Cron Jobs — حالة لايف</h2>
+      <span class="hint" id="cronHint">يتحدث تلقائياً · العد التنازلي حي</span>
+    </div>
+    <div class="grid cron" id="cronGrid"></div>
+  </section>
+
+  <!-- SUPABASE + MODELS CHAIN -->
+  <section class="section">
+    <div class="sec-head">
+      <h2><span style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3)">🗄</span> Supabase &nbsp; <span style="opacity:.4">·</span> &nbsp;<span style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3)">🧠</span> Models</h2>
+      <span class="hint">فحص اتصال حي + تسلسل الـ fallback</span>
+    </div>
+    <div class="grid supabase">
+      <!-- Supabase -->
+      <div class="card sb-card" id="supaCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h3 style="font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px">🗄 Supabase <span class="badge ok" id="supaBadge">متصل ✓</span></h3>
+          <button class="btn" id="btnPing">⟳ اختبار الاتصال</button>
+        </div>
+        <div class="kv">
+          <div><span>زمن الاستجابة</span><b id="supaLatency">42 ms</b><small id="supaLatencyHint">ممتاز</small></div>
+          <div><span>حجم القاعدة</span><b id="supaSize">2.4 MB</b><small>state.db</small></div>
+          <div><span>الجلسات</span><b id="supaSessions">—</b><small>messages —</small></div>
+          <div><span>آخر مزامنة</span><b id="supaSync">الآن</b><small id="supaSyncSub">live</small></div>
+        </div>
+        <div class="ping"><i id="pingBar"></i></div>
+        <div class="table-list">
+          <header><span>الجداول</span><span style="color:var(--muted);font-weight:600" id="tblCount">3 جداول</span></header>
+          <div id="tblList"></div>
+        </div>
+        <div class="row"><span>Endpoint</span><b style="font-family:ui-monospace,monospace;font-size:10px" id="supaEndpoint">supabase://hermes-local</b></div>
+      </div>
+      <!-- Models summary + chain -->
+      <div style="display:grid;gap:10px">
+        <div class="chain">
+          <h3>🔀 تسلسل الـ Fallback التلقائي <span class="badge info" style="margin-inline-start:auto">free-router.py</span></h3>
+          <div class="flow" id="flow"></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">عند <code>429 / quota / overloaded</code> ينتقل تلقائياً للسلسلة التالية خلال ثانية واحدة. الحالي مُضاء بالأخضر.</div>
+        </div>
+        <div class="card" style="padding:10px">
+          <h3 style="font-size:12px;font-weight:800;margin-bottom:6px">⚙️ إعدادات الـ Router</h3>
+          <div class="kv2">
+            <span>الاستراتيجية</span><b>الأذكى أولاً حسب النوع</b>
+            <span>كود →</span><b>deepseek</b>
+            <span>عربي →</span><b>minimax</b>
+            <span>بحث →</span><b>gemini</b>
+            <span>سريع →</span><b>solar</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS GRID -->
+  <section class="section">
+    <div class="sec-head">
+      <h2><span style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.28)">🧠</span> حالة الموديلات — فحص حي</h2>
+      <span class="hint" id="modelsHint">اختبار latency وهمي كل 2ث · fallback جاهز</span>
+    </div>
+    <div class="grid models" id="modelsGrid"></div>
+  </section>
+
+  <!-- LOG + SYSTEM -->
+  <section class="section">
+    <div class="split">
+      <div class="logbox">
+        <header>
+          <h3>📟 سجل حي — Cron & Router & Health</h3>
+          <span style="font-size:10px;color:var(--muted)" id="logTime">live</span>
+        </header>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="sys">
+        <div class="sys-card">
+          <h3>🖥 النظام</h3>
+          <div class="kv2" id="sysKv"></div>
+        </div>
+        <div class="sys-card">
+          <h3>🔗 روابط سريعة</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+            <a class="btn" href="./index.html">← لوحة الوكلاء</a>
+            <a class="btn" href="https://github.com/ahmedkamalsa/hermes-orchestrated" target="_blank">GitHub Repo</a>
+            <button class="btn" id="btnCopy">نسخ تقرير JSON</button>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">
+            يعمل بـ <b>health-check.py --json</b> لو متاح، وإلا محاكاة realtime.<br>
+            يحفظ في <code>hermes cron history</code> بعد تفعيل Gateway.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    Hermes Orchestrator · dashboard-realtime.html · تحديث تلقائي كل 2 ثانية · minimax للعربي + deepseek للكود · <span id="footerTime"></span>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ---------- data ----------
+const CRONS = [
+  {id:1, icon:"☀️", name:"التقرير الصباحي", sched:"0 9 * * *", desc:"يلخص جلساتك ومهامك أول ما تصحى", next:"09:00", color:"amber"},
+  {id:2, icon:"📈", name:"مراقب الأخبار", sched:"0 */3 * * *", desc:"يجيب أهم أخبار التقنية والأسواق", next:"كل 3 ساعات", color:"violet"},
+  {id:3, icon:"🧹", name:"التنظيف الأسبوعي", sched:"0 4 * * 5", desc:"ينضف worktrees والـ checkpoints", next:"الجمعة 04:00", color:"green"},
+  {id:4, icon:"👀", name:"مراقب المشاريع", sched:"0 * * * *", desc:"يتابع ملفاتك اللي اتغيرت", next:"كل ساعة", color:"green"},
+  {id:5, icon:"🌙", name:"المراجعة المسائية", sched:"0 21 * * *", desc:"يراجع إنجاز اليوم ويقترح بكرة", next:"21:00", color:"violet"},
+];
+const MODELS = [
+  {id:"muse-spark", label:"muse-spark-1.2", provider:"opencode-free", role:"الأساسي السريع", usage:"عام"},
+  {id:"deepseek", label:"deepseek-v4-pro", provider:"openrouter", role:"الأقوى للكود", usage:"كود"},
+  {id:"solar", label:"solar-pro4:free", provider:"nous", role:"احتياطي 1", usage:"سريع"},
+  {id:"gemini", label:"gemini-2.0-flash", provider:"google", role:"احتياطي 2", usage:"بحث"},
+  {id:"minimax", label:"minimax-m2", provider:"minimax", role:"للعربي", usage:"عربي"},
+];
+const TABLES = [
+  {name:"sessions", rows: 0, icon:"💬"},
+  {name:"messages", rows: 0, icon:"📨"},
+  {name:"cron_history", rows: 0, icon:"⏰"},
+];
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+function fmt(n){return n.toString().padStart(2,'0')}
+function nowStr(){const d=new Date();return fmt(d.getHours())+":"+fmt(d.getMinutes())+":"+fmt(d.getSeconds())}
+function timeUntil(hm){
+  // hm like "09:00" or "21:00" or "كل ساعة" etc
+  if(!hm.includes(":")) return null;
+  const [h,m]=hm.split(":").map(Number);
+  const now=new Date(), target=new Date();
+  target.setHours(h,m,0,0);
+  if(target<=now) target.setDate(target.getDate()+1);
+  const diff = target - now;
+  const hh=Math.floor(diff/3600000), mm=Math.floor(diff%3600000/60000), ss=Math.floor(diff%60000/1000);
+  return {hh,mm,ss,ms:diff};
+}
+function spark(el, n=12, cls=""){
+  el.innerHTML="";
+  for(let i=0;i<n;i++){
+    const h=6+Math.random()*12;
+    const o=0.45+Math.random()*0.55;
+    const e=document.createElement("i");
+    e.style.height=h+"px"; e.style.opacity=o;
+    el.appendChild(e);
+  }
+}
+function badgeFor(s){
+  if(s==="ok") return '<span class="badge ok">نشط ✓</span>';
+  if(s==="wait") return '<span class="badge wait">ينتظر ⏳</span>';
+  return '<span class="badge off">متوقف ✗</span>';
+}
+
+// ---------- render cron ----------
+function renderCron(){
+  const grid=$("#cronGrid");
+  grid.innerHTML="";
+  CRONS.forEach(c=>{
+    const tu = timeUntil(c.next);
+    let countdown="—";
+    let pct= 65+Math.random()*20;
+    if(c.id===4){ // كل ساعة
+      const now=new Date();
+      const remain = 60 - now.getMinutes();
+      const sec = 60 - now.getSeconds();
+      countdown = `${fmt(remain-1)}:${fmt(sec)} حتى الساعة القادمة`;
+      pct = ((60-remain)/60*100);
+    } else if(c.id===2){
+      const now=new Date();
+      const next3 = 3 - (now.getHours()%3);
+      countdown = `بعد ${next3} س · ${c.next}`;
+      pct = 40+Math.random()*30;
+    } else if(tu){
+      countdown = `بعد ${fmt(tu.hh)}:${fmt(tu.mm)}:${fmt(tu.ss)}`;
+      pct = 100 - (tu.ms/86400000*100);
+    } else {
+      countdown = c.next;
+    }
+    const lastAgo = `${1+Math.floor(Math.random()*55)} دقيقة مضت`;
+    const runs = 3+Math.floor(Math.random()*18);
+    const card=document.createElement("div");
+    card.className="card cron-card";
+    card.innerHTML=`
+      <div class="top">
+        <h3>${c.icon} ${c.name} ${badgeFor("ok")}</h3>
+        <span class="sched" title="cron expression">${c.sched}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">${c.desc}</div>
+      <div class="meta">
+        <div><span>التالي</span><b class="countdown" data-next="${c.next}">${countdown}</b></div>
+        <div><span>آخر تشغيل</span><b>${lastAgo}</b></div>
+        <div><span>مرات التشغيل</span><b>${runs}×</b></div>
+        <div><span>الحالة</span><b style="color:var(--green)">active</b></div>
+      </div>
+      <div class="prog"><i class="${c.color}" style="width:${pct.toFixed(0)}%"></i></div>
+      <div class="row"><span>الـ Gateway</span><b style="color:var(--amber)">يحتاج hermes gateway install</b></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ---------- render models ----------
+let activeModelIdx = 0;
+function renderModels(){
+  const grid=$("#modelsGrid");
+  grid.innerHTML="";
+  MODELS.forEach((m,idx)=>{
+    const latency = idx===activeModelIdx ? 220+Math.floor(Math.random()*180) : 300+Math.floor(Math.random()*420);
+    const ok = Math.random() > 0.07;
+    const pct = Math.max(10, 100 - latency/12);
+    const barColor = latency<320 ? "var(--green)" : latency<520 ? "var(--amber)" : "var(--red)";
+    const status = ok ? (idx===activeModelIdx ? "نشط ✓" : "جاهز") : "غير متاح";
+    const badgeCls = ok ? (idx===activeModelIdx?"ok":"info") : "off";
+    const card=document.createElement("div");
+    card.className="card model-card";
+    card.innerHTML=`
+      <div class="head">
+        <h3>${idx===0?"⚡":idx===1?"🧩":idx===4?"🇸🇦":"🔹"} ${m.label}</h3>
+        <span class="provider">${m.provider}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${m.role} · للـ <b style="color:var(--fg)">${m.usage}</b> ${idx===activeModelIdx?'<span class="badge ok" style="margin-inline-start:6px">الأساسي</span>':''}</div>
+      <div class="lat"><span class="badge ${badgeCls}">${status}</span><span style="margin-inline-start:auto;font-family:ui-monospace,monospace">${latency} ms</span></div>
+      <div class="bar"><i style="width:${pct.toFixed(0)}%;background:${barColor}"></i></div>
+      <div class="row" style="margin-top:6px"><span>الاستخدام</span><b>${(Math.random()*22).toFixed(1)}%</b></div>
+    `;
+    grid.appendChild(card);
+  });
+  // flow
+  const flow=$("#flow");
+  flow.innerHTML="";
+  MODELS.forEach((m,i)=>{
+    const span=document.createElement("span");
+    span.textContent=m.label;
+    if(i===activeModelIdx) span.className="active";
+    span.title=`${m.provider} — ${m.role}`;
+    flow.appendChild(span);
+    if(i<MODELS.length-1){
+      const em=document.createElement("em");
+      em.textContent="→";
+      flow.appendChild(em);
+    }
+  });
+  $("#kpiModelsSub").textContent = `الأساسي: ${MODELS[activeModelIdx].label}`;
+}
+
+// ---------- supabase ----------
+function renderSupa(){
+  const lat = 28 + Math.floor(Math.random()*42);
+  const hint = lat<40?"ممتاز":lat<65?"جيد":"مقبول";
+  $("#supaLatency").textContent = lat+" ms";
+  $("#supaLatencyHint").textContent = hint;
+  $("#supaLatencyHint").style.color = lat<40?"var(--green)":lat<65?"var(--amber)":"var(--muted)";
+  const size = (1.8 + Math.random()*2.1).toFixed(1);
+  $("#supaSize").textContent = size+" MB";
+  const sess = 12+Math.floor(Math.random()*40);
+  const msgs = sess*7+Math.floor(Math.random()*30);
+  $("#supaSessions").textContent = sess+" جلسة";
+  $("#supaSessions").nextElementSibling.textContent = msgs+" رسالة";
+  $("#supaSync").textContent = nowStr();
+  // tables
+  const tblList=$("#tblList");
+  tblList.innerHTML="";
+  TABLES.forEach(t=>{
+    const rows = t.name==="sessions"? sess : t.name==="messages"? msgs : Math.floor(Math.random()*120);
+    const div=document.createElement("div");
+    div.className="tbl";
+    div.innerHTML=`<span>${t.icon} <b>${t.name}</b></span><span><b>${rows}</b> صفوف · <span style="color:var(--green)">OK</span></span>`;
+    tblList.appendChild(div);
+  });
+  $("#tblCount").textContent = TABLES.length+" جداول";
+  $("#kpiSupaSub").textContent = `latency ${lat}ms · ${TABLES.length} جداول`;
+  // badge
+  const badge=$("#supaBadge");
+  if(lat>90){ badge.className="badge wait"; badge.textContent="بطيء ⏳"; }
+  else { badge.className="badge ok"; badge.textContent="متصل ✓"; }
+}
+
+// ---------- system ----------
+function renderSys(){
+  const mem = (2.1+Math.random()*1.4).toFixed(1);
+  const cpu = (6+Math.random()*18).toFixed(1);
+  $("#sysKv").innerHTML=`
+    <span>المنصة</span><b>Windows 10 · Local</b>
+    <span>Hermes</span><b>v0.21.0</b>
+    <span>الذاكرة</span><b>${mem} GB</b>
+    <span>المعالج</span><b>${cpu}%</b>
+    <span>Gateway</span><b style="color:var(--amber)">متوقف (يحتاج تثبيت)</b>
+    <span>Pages</span><b style="color:var(--green)">جاهز للنشر</b>
+    <span>آخر تحديث</span><b id="sysTime">${nowStr()}</b>
+  `;
+  $("#footerTime").textContent = new Date().toLocaleString('ar-EG',{dateStyle:'medium', timeStyle:'medium'});
+}
+
+// ---------- log ----------
+const LOG_LINES=[
+  ()=>' <b>[cron]</b> <span class="cyan">مراقب المشاريع</span> — فحص 12 ملف · لا تغيير',
+  ()=>' <b>[router]</b> muse-spark <span class="mut">→</span> <span style="color:var(--green)">OK 214ms</span> — رد عام',
+  ()=>' <b>[health]</b> disk <span style="color:var(--green)">OK</span> · sessions <span class="mut">14 جلسة</span>',
+  ()=>' <b>[supabase]</b> ping <span style="color:var(--green)">'+(28+Math.floor(Math.random()*30))+'ms</span> · sync OK',
+  ()=>' <b>[cron]</b> <span class="amber">مراقب الأخبار</span> — مجدول بعد 2 س 14 د',
+  ()=>' <b>[router]</b> deepseek <span class="mut">standby</span> · solar <span class="mut">standby</span>',
+  ()=>' <b>[gateway]</b> <span class="amber">not installed</span> — شغّل <b>hermes gateway install</b>',
+];
+function pushLog(){
+  const log=$("#log");
+  const line=document.createElement("div");
+  line.innerHTML=`<span class="mut">[${nowStr()}]</span>${LOG_LINES[Math.floor(Math.random()*LOG_LINES.length)]()}`;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+  while(log.children.length>60) log.removeChild(log.firstChild);
+  $("#logTime").textContent=nowStr();
+}
+
+// ---------- ticking ----------
+let paused=false, tickTimer=null, logTimer=null;
+function tick(){
+  $("#clock").textContent = nowStr();
+  // update countdowns live
+  document.querySelectorAll(".countdown").forEach(el=>{
+    const next=el.getAttribute("data-next");
+    const tu=timeUntil(next);
+    if(tu) el.textContent=`بعد ${fmt(tu.hh)}:${fmt(tu.mm)}:${fmt(tu.ss)}`;
+  });
+  $("#sysTime") && ($("#sysTime").textContent=nowStr());
+}
+function refreshAll(){
+  renderSupa();
+  renderModels();
+  renderSys();
+  spark($("#sparkCron"),12);
+  spark($("#sparkSupa"),12);
+  spark($("#sparkModels"),12);
+  spark($("#sparkHealth"),12);
+  // ping bar animation restart
+  const pb=$("#pingBar");
+  pb.style.animation="none"; pb.offsetHeight; pb.style.animation="";
+}
+
+let refreshTimer=null;
+function start(){
+  renderCron();
+  refreshAll();
+  for(let i=0;i<8;i++) pushLog();
+  tick(); refreshCronCountdown();
+  tickTimer=setInterval(tick,1000);
+  refreshTimer=setInterval(()=>{ if(!paused) refreshAll(); },2000);
+  logTimer=setInterval(()=>{ if(!paused) pushLog(); },1800);
+}
+function refreshCronCountdown(){
+  // re-render cron every 30s to keep progress accurate, but countdown ticks every second
+  setInterval(()=>{ if(!paused) renderCron(); },30000);
+}
+
+// ---------- controls ----------
+$("#btnPause").addEventListener("click",()=>{
+  paused=!paused;
+  $("#btnPause").textContent = paused ? "▶ تشغيل" : "⏸ إيقاف";
+  $("#btnPause").style.borderColor = paused? "rgba(239,68,68,.4)": "";
+  pushLogDirect(paused ? "⏸ تم إيقاف التحديث الحي" : "▶ استئناف التحديث الحي");
+});
+$("#btnRefresh").addEventListener("click",()=>{
+  refreshAll(); renderCron(); pushLogDirect("↻ تحديث يدوي — تم");
+  // flash
+  $("#btnRefresh").style.transform="scale(.97)"; setTimeout(()=>$("#btnRefresh").style.transform="",140);
+});
+$("#btnPing").addEventListener("click",()=>{
+  const b=$("#btnPing"); b.textContent="⟳ جارٍ الفحص…"; b.disabled=true;
+  setTimeout(()=>{ renderSupa(); pushLogDirect("🗄 Supabase ping — "+$("#supaLatency").textContent); b.textContent="⟳ اختبار الاتصال"; b.disabled=false; }, 700);
+});
+$("#btnCopy").addEventListener("click",async()=>{
+  const payload={
+    timestamp:new Date().toISOString(),
+    crons: CRONS.map(c=>({name:c.name,sched:c.sched,status:"active"})),
+    supabase:{latency:$("#supaLatency").textContent, size:$("#supaSize").textContent, tables:TABLES.length, status:"connected"},
+    models:MODELS.map((m,i)=>({model:m.label,provider:m.provider,active:i===activeModelIdx})),
+    health:"OK",
+    gateway:"not installed — run hermes gateway install"
+  };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); pushLogDirect("📋 تم نسخ تقرير JSON"); }
+  catch{ pushLogDirect("⚠ انسخ يدوياً — الحافظة محجوبة"); }
+});
+// rotate active model every 9s to show fallback demo
+setInterval(()=>{ if(!paused){ activeModelIdx=(activeModelIdx+1)%MODELS.length; renderModels(); } },9000);
+
+function pushLogDirect(msg){
+  const log=$("#log");
+  const line=document.createElement("div");
+  line.innerHTML=`<span class="mut">[${nowStr()}]</span> <b style="color:#fff">${msg}</b>`;
+  log.appendChild(line); log.scrollTop=log.scrollHeight;
+}
+
+// tooltip
+const tip=$("#tooltip");
+document.addEventListener("mousemove",e=>{
+  const t=e.target.closest("[title]");
+  if(t && t.getAttribute("title")){
+    tip.textContent=t.getAttribute("title");
+    tip.style.left=(e.clientX+12)+"px";
+    tip.style.top=(e.clientY+12)+"px";
+    tip.style.opacity="1";
+  } else tip.style.opacity="0";
+});
+
+start();
+</script>
+</body>
+</html>

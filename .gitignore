@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+supabase.env
+*.key
+hermes.env
